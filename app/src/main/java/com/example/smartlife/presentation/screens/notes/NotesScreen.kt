@@ -1,6 +1,5 @@
 package com.example.smartlife.presentation.screens.notes
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -34,7 +33,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -103,7 +101,7 @@ fun NotesScreen(
             item {
                 SubTitle(
                     modifier = Modifier.padding(horizontal = 24.dp),
-                    str = if (currentState.pinnedList.size <1){
+                    str = if (currentState.pinnedList.isEmpty()){
                         "No one Note is Pinned"
                     }else{
                         "Pinned"
@@ -170,14 +168,7 @@ fun NotesScreen(
     }
 
 }
-fun cheker(id: Int): Int{
-    if (id % 2 ==0 ) {
-        return R.drawable.back1
-    }
-    else{
-        return R.drawable.back2
-    }
-}
+
 
 @Composable
 fun NoteCard(
@@ -186,6 +177,7 @@ fun NoteCard(
     backGroundColor: Color,
     noteClicked: (Note) -> Unit,
     onLongClick: (Note) -> Unit) {
+
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
@@ -195,34 +187,18 @@ fun NoteCard(
                 onLongClick = { onLongClick(note) })
     ) {
             Box {
-                Image(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .heightIn(max = 110.dp)
-                    ,
-                    contentDescription = "Note $note",
-                    contentScale = ContentScale.FillWidth,
-                    painter = painterResource(cheker(note.id)),
-                )
                 Column(modifier.padding(16.dp)) {
                     Spacer(Modifier.height(10.dp))
                     Text(
                         text = note.title,
                         fontSize = 14.sp,
-                        color =
-                            if (cheker(note.id)==R.drawable.back1){
-                                Color.White
-                        }else{
-                                MaterialTheme.colorScheme.onSurface
-                        },
                         maxLines = 1
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
                         text = DateFormatter.formatDateTimeToString(note.updatedAt),
                         fontSize = 12.sp,
-                        color = Color.White
-                            //MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(

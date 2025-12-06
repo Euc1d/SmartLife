@@ -1,6 +1,7 @@
 package com.example.smartlife.data
 
 import android.content.Context
+import com.example.smartlife.domain.ContentItem
 import com.example.smartlife.domain.Note
 import com.example.smartlife.domain.NotesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -15,7 +16,7 @@ class NoteRepositoryImpl @Inject constructor(val notesDao: NotesDao): NotesRepos
 
     override suspend fun addNote(
         title: String,
-        content: String,
+        content: List<ContentItem>,
         isPinned: Boolean,
         updatedAt: Long
     ) {
