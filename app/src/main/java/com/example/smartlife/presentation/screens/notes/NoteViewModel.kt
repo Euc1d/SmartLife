@@ -1,17 +1,13 @@
 package com.example.smartlife.presentation.screens.notes
 
-import android.content.Context
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.smartlife.data.NoteRepositoryImpl
-import com.example.smartlife.data.TestNotesRepositoryImpl
-import com.example.smartlife.domain.AddNoteUseCase
 import com.example.smartlife.domain.GetAllNotesUseCase
 import com.example.smartlife.domain.Note
 import com.example.smartlife.domain.NotesRepository
 import com.example.smartlife.domain.SearchNotesUseCase
 import com.example.smartlife.domain.SwitchPinnedStatusUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,15 +16,15 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@HiltViewModel
 @OptIn(ExperimentalCoroutinesApi::class)
-class NoteViewModel(context: Context): ViewModel() {
-
-    private val repository = NoteRepositoryImpl.getInstance(context)
-    private val getAllNotesUseCase = GetAllNotesUseCase(repository)
-    private val searchNotesUseCase = SearchNotesUseCase(repository)
-    private val switchPinnedStatusUseCase = SwitchPinnedStatusUseCase(repository)
-
+class NoteViewModel @Inject constructor(
+    private val getAllNotesUseCase : GetAllNotesUseCase,
+    private val searchNotesUseCase : SearchNotesUseCase,
+    private val switchPinnedStatusUseCase: SwitchPinnedStatusUseCase
+): ViewModel() {
 
     private val _state = MutableStateFlow(NoteScreenState())
     val state = _state.asStateFlow()

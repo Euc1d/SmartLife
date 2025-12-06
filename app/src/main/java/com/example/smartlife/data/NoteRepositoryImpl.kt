@@ -3,14 +3,15 @@ package com.example.smartlife.data
 import android.content.Context
 import com.example.smartlife.domain.Note
 import com.example.smartlife.domain.NotesRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
+
+class NoteRepositoryImpl @Inject constructor(val notesDao: NotesDao): NotesRepository {
 
 
-class NoteRepositoryImpl private constructor(context: Context): NotesRepository {
-
-    private val notesDataBase = NotesDataBase.getInstance(context)
-    private val notesDao = notesDataBase.NotesDao()
 
     override suspend fun addNote(
         title: String,
@@ -56,21 +57,21 @@ class NoteRepositoryImpl private constructor(context: Context): NotesRepository 
     override suspend fun switchPinnedStatus(noteId: Int) {
         notesDao.switchPinnedStatus(noteId)
     }
-    companion object{
-        private val LOCK = Any()
-        private var instance : NoteRepositoryImpl? = null
-
-        fun getInstance(context: Context): NoteRepositoryImpl{
-            instance?.let {
-                return it
-            }
-            synchronized(LOCK) {
-                instance?.let {
-                    return it
-                }
-                return NoteRepositoryImpl(context).also { instance = it }
-            }
-        }
-
-    }
+//    companion object{
+//        private val LOCK = Any()
+//        private var instance : NoteRepositoryImpl? = null
+//
+//        fun getInstance(): NoteRepositoryImpl{
+//            instance?.let {
+//                return it
+//            }
+//            synchronized(LOCK) {
+//                instance?.let {
+//                    return it
+//                }
+//                return NoteRepositoryImpl().also { instance = it }
+//            }
+//        }
+//
+//    }
 }

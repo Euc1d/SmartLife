@@ -1,28 +1,27 @@
 package com.example.smartlife.presentation.screens.edits
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.smartlife.data.NoteRepositoryImpl
-import com.example.smartlife.data.TestNotesRepositoryImpl
 import com.example.smartlife.domain.DeleteNoteUseCase
 import com.example.smartlife.domain.EditNoteUseCase
 import com.example.smartlife.domain.GetNoteUseCase
 import com.example.smartlife.domain.Note
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class EditNoteViewModel(
-    val id : Int,
-    context: Context
-) : ViewModel() {
-    val repository = NoteRepositoryImpl.getInstance(context)
-
-    val editNoteUseCase = EditNoteUseCase(repository)
-    val getNotesUseCase = GetNoteUseCase(repository)
-    val deleteNoteUseCase = DeleteNoteUseCase(repository)
+@HiltViewModel(assistedFactory = EditNoteViewModel.Factory::class)
+class EditNoteViewModel @AssistedInject constructor(
+    @Assisted("id") val id : Int,
+    val editNoteUseCase : EditNoteUseCase,
+    val getNotesUseCase : GetNoteUseCase,
+    val deleteNoteUseCase: DeleteNoteUseCase
+    ) : ViewModel() {
 
     private val _state = MutableStateFlow<EditNoteState>(EditNoteState.Init)
     val state = _state.asStateFlow()
@@ -86,6 +85,10 @@ class EditNoteViewModel(
                 }
             }
         }
+    }
+    @AssistedFactory
+    interface Factory{
+        fun create(@Assisted("id") id: Int): EditNoteViewModel
     }
 
 }

@@ -2,7 +2,6 @@
 
 package com.example.smartlife.presentation.screens.creations
 
-import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,21 +25,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.smartlife.presentation.units.DateFormatter
 
 @Composable
 fun CreateNoteScreen(
-    context: Context = LocalContext.current.applicationContext,
     modifier: Modifier = Modifier,
-    viewModel: CreateNoteViewModel = viewModel{
-        CreateNoteViewModel(context = context)
-    },
+    viewModel: CreateNoteViewModel = hiltViewModel(),
     onFinished: () -> Unit
 ) {
     val state = viewModel.state.collectAsState()

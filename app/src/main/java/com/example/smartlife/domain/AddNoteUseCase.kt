@@ -1,6 +1,8 @@
 package com.example.smartlife.domain
 
-class AddNoteUseCase(private val repository: NotesRepository) {
+import javax.inject.Inject
+
+class AddNoteUseCase @Inject constructor(private val repository: NotesRepository) {
     suspend operator fun invoke(
         title: String,
         content: String,
