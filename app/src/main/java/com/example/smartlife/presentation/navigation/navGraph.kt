@@ -12,6 +12,7 @@ import com.example.smartlife.presentation.screens.notes.NotesScreen
 @Composable
 fun NavGraph(){
     val navController = rememberNavController()
+
     NavHost(
         navController=navController,
         startDestination = Screen.Notes.route
