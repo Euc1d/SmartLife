@@ -2,6 +2,8 @@
 
 package com.example.smartlife.presentation.screens.creations
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +32,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.smartlife.presentation.ui.theme.Content
+import com.example.smartlife.presentation.ui.theme.CustomIcons
 import com.example.smartlife.presentation.units.DateFormatter
 
 @Composable
@@ -40,6 +44,15 @@ fun CreateNoteScreen(
 ) {
     val state = viewModel.state.collectAsState()
     val currentState = state.value
+
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = {
+            it?.let { uri ->
+                viewModel.processCommand(CreateNoteCommand.AddImage(uri))
+            }
+        }
+    )
     when (currentState) {
         is CreateNoteState.Creation -> {
             Scaffold(
@@ -62,6 +75,18 @@ fun CreateNoteScreen(
                                     },
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back button"
+                            )
+                        },
+                        actions = {
+                            Icon(
+                                modifier = Modifier
+                                    .clickable {
+                                        imagePicker.launch("image/*")
+                                    }
+                                    .padding(end = 24.dp),
+                                imageVector = CustomIcons.AddPhoto,
+                                contentDescription = "Add Photo from gallery",
+                                tint = MaterialTheme.colorScheme.onSurface
                             )
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -110,35 +135,18 @@ fun CreateNoteScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp
                     )
-
-                    TextField(
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp)
-                            .fillMaxWidth()
-                            .weight(1f),
-                        value = currentState.description,
-                        onValueChange = {
-                            viewModel.processCommand(
-                                CreateNoteCommand.InputDescription(
-                                    it
-                                )
-                            )
+                    Content(
+                        modifier = Modifier.weight(1f),
+                        content = currentState.content,
+                        onDeleteImageClick = {
+                            viewModel.processCommand(CreateNoteCommand.DeleteImage(it))
                         },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        ),
-                        textStyle = TextStyle(
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        ),
-                        placeholder = {
-                            Text(
-                                text = "Note something down",
-                                fontSize = 16.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                        onValueChanged = { index, text ->
+                            viewModel.processCommand(
+                                CreateNoteCommand.InputContent(
+                                    index = index,
+                                    content = text
+                                )
                             )
                         }
                     )
@@ -162,6 +170,7 @@ fun CreateNoteScreen(
 
             }
         }
+
         CreateNoteState.Finished -> {
             LaunchedEffect(key1 = Unit) {
                 onFinished()
@@ -169,3 +178,4 @@ fun CreateNoteScreen(
         }
     }
 }
+

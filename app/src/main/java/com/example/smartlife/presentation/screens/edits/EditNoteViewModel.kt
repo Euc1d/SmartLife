@@ -1,7 +1,11 @@
 package com.example.smartlife.presentation.screens.edits
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.smartlife.domain.ContentItem
+import com.example.smartlife.domain.ContentItem.Image
+import com.example.smartlife.domain.ContentItem.Text
 import com.example.smartlife.domain.DeleteNoteUseCase
 import com.example.smartlife.domain.EditNoteUseCase
 import com.example.smartlife.domain.GetNoteUseCase
@@ -28,8 +32,13 @@ class EditNoteViewModel @AssistedInject constructor(
     init {
         viewModelScope.launch {
             _state.update {
-                val newNote  = getNotesUseCase(id)
-                EditNoteState.Editing(newNote)
+                val note: Note = getNotesUseCase(id)
+                val content: List<ContentItem> = if (note.content.lastOrNull() !is ContentItem.Text) {
+                    note.content + ContentItem.Text("")
+                } else {
+                    note.content
+                }
+                EditNoteState.Editing(note.copy(content = content))
             }
         }
     }
@@ -45,7 +54,15 @@ class EditNoteViewModel @AssistedInject constructor(
                 is EditNoteCommand.InputDescription -> {
                     _state.update { prev->
                         if (prev is EditNoteState.Editing){
-                            val editedNote = prev.note.copy(content = command.content)
+                        val newContent = prev.note.content
+                            .mapIndexed { index, contentItem ->
+                                if (index == command.index && contentItem is ContentItem.Text) {
+                                    contentItem.copy(content = command.content)
+                                } else {
+                                    contentItem
+                                }
+                            }
+                            val editedNote = prev.note.copy(content = newContent)
                             prev.copy(note = editedNote)
                         }else{
                             prev
@@ -83,6 +100,38 @@ class EditNoteViewModel @AssistedInject constructor(
                         }
                     }
                 }
+
+                is EditNoteCommand.AddImage -> {
+                    _state.update { prev ->
+                        if (prev is EditNoteState.Editing) {
+                            val newItems = prev.note.content.toMutableList()
+                            val lastItem = newItems.last()
+                            if (lastItem is ContentItem.Text && lastItem.content.isBlank()) {
+                                newItems.removeAt(newItems.lastIndex)
+                            }
+                            newItems.add(Image(command.uri.toString()))
+                            newItems.add(Text(""))
+                            newItems.toList()
+                            prev.copy(note = prev.note.copy(content = newItems))
+                        } else {
+                            prev
+                        }
+                    }
+                }
+
+                is EditNoteCommand.DeleteImage -> {
+                    _state.update { prev ->
+                        if (prev is EditNoteState.Editing) {
+                            prev.note.content.toMutableList().apply {
+                                removeAt(command.index)
+                            }.let {
+                                prev.copy(note = prev.note.copy(content = it))
+                            }
+                        } else {
+                            prev
+                        }
+                    }
+                }
             }
         }
     }
@@ -96,8 +145,10 @@ class EditNoteViewModel @AssistedInject constructor(
 sealed interface EditNoteCommand{
     data class InputTitle(val title: String) : EditNoteCommand
 
-    data class InputDescription(val content: String) : EditNoteCommand
+    data class InputDescription(val content: String, val index: Int) : EditNoteCommand
 
+    data class AddImage(val uri: Uri): EditNoteCommand
+    data class DeleteImage(val index: Int): EditNoteCommand
     data object Save : EditNoteCommand
 
     data object Back : EditNoteCommand
@@ -111,9 +162,20 @@ sealed interface EditNoteState {
         val note : Note
     ) : EditNoteState{
         val isEnabled : Boolean
-            get() = note.title.isNotBlank() && note.content.isNotBlank()
+            get(){
+                return when{
+                    note.title.isBlank() -> false
+                    note.content.isEmpty() -> false
+                    else -> {
+                        return note.content.any{
+                            it !is ContentItem.Text || it.content.isNotBlank()
+                        }
+                    }
+                }
+            }
     }
     object Init: EditNoteState
 
     data object Finished : EditNoteState
 }
+

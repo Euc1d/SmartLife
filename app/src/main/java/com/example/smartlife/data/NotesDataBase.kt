@@ -9,7 +9,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-@Database(entities = [NoteDBModel::class], version = 1, exportSchema = false)
+@Database(entities = [NoteDBModel::class], version = 2, exportSchema = false)
 abstract class NotesDataBase: RoomDatabase() {
 
     abstract fun NotesDao(): NotesDao
@@ -30,7 +30,7 @@ abstract class NotesDataBase: RoomDatabase() {
                     context = context,
                     klass = NotesDataBase::class.java,
                     name = "notes.db"
-                ).build().also {
+                ).fallbackToDestructiveMigration(dropAllTables = true).build().also {
                     instance = it
                 }
             }
