@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.android.hilt)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -45,7 +46,11 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.core.splashscreen)
 
+
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
@@ -76,4 +81,7 @@ dependencies {
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(libs.kotlinx.serialization.json)  // Добавьте эту строку
+
+
 }

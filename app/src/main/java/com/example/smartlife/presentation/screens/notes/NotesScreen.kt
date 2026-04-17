@@ -1,6 +1,5 @@
 package com.example.smartlife.presentation.screens.notes
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -31,17 +30,23 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import coil3.compose.AsyncImage
 import com.example.smartlife.R
+import com.example.smartlife.domain.ContentItem
 import com.example.smartlife.domain.Note
 import com.example.smartlife.presentation.ui.theme.OtherNotesColors
 import com.example.smartlife.presentation.ui.theme.PinnedNotesColors
@@ -103,9 +108,9 @@ fun NotesScreen(
             item {
                 SubTitle(
                     modifier = Modifier.padding(horizontal = 24.dp),
-                    str = if (currentState.pinnedList.size <1){
+                    str = if (currentState.pinnedList.isEmpty()) {
                         "No one Note is Pinned"
-                    }else{
+                    } else {
                         "Pinned"
                     }
                 )
@@ -124,9 +129,11 @@ fun NotesScreen(
                         key = { _, note -> note.id }
                     ) { index, note ->
                         NoteCard(
-                            modifier = Modifier.widthIn(max = 160.dp).heightIn(max = 250.dp),
+                            modifier = Modifier
+                                .widthIn(max = 160.dp)
+                                .heightIn(max = 140.dp, min = 140.dp),
                             note = note,
-                            noteClicked ={onNoteClick(note)},
+                            noteClicked = { onNoteClick(note) },
                             backGroundColor = PinnedNotesColors[(index % PinnedNotesColors.size)],
                             onLongClick = {
                                 viewModel.processCommand(NotesCommand.SwitchPinnedStatus(it.id))
@@ -145,7 +152,7 @@ fun NotesScreen(
                 )
             }
             item {
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(8.dp))
             }
             itemsIndexed(
                 items = currentState.otherList,
@@ -154,10 +161,10 @@ fun NotesScreen(
 
                 NoteCard(
                     modifier = modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
+                        .padding(horizontal = 24.dp)
+                        .fillMaxWidth(),
                     note = note,
-                    noteClicked = {onNoteClick(note)},
+                    noteClicked = { onNoteClick(note) },
                     backGroundColor = OtherNotesColors[(index % OtherNotesColors.size)],
                     onLongClick = {
                         viewModel.processCommand(NotesCommand.SwitchPinnedStatus(it.id))
@@ -170,14 +177,7 @@ fun NotesScreen(
     }
 
 }
-fun cheker(id: Int): Int{
-    if (id % 2 ==0 ) {
-        return R.drawable.back1
-    }
-    else{
-        return R.drawable.back2
-    }
-}
+
 
 @Composable
 fun NoteCard(
@@ -185,7 +185,9 @@ fun NoteCard(
     note: Note,
     backGroundColor: Color,
     noteClicked: (Note) -> Unit,
-    onLongClick: (Note) -> Unit) {
+    onLongClick: (Note) -> Unit
+) {
+
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
@@ -194,48 +196,84 @@ fun NoteCard(
                 onClick = { noteClicked(note) },
                 onLongClick = { onLongClick(note) })
     ) {
-            Box {
-                Image(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .heightIn(max = 110.dp)
-                    ,
-                    contentDescription = "Note $note",
-                    contentScale = ContentScale.FillWidth,
-                    painter = painterResource(cheker(note.id)),
-                )
-                Column(modifier.padding(16.dp)) {
-                    Spacer(Modifier.height(10.dp))
-                    Text(
-                        text = note.title,
-                        fontSize = 14.sp,
-                        color =
-                            if (cheker(note.id)==R.drawable.back1){
-                                Color.White
-                        }else{
-                                MaterialTheme.colorScheme.onSurface
-                        },
-                        maxLines = 1
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = DateFormatter.formatDateTimeToString(note.updatedAt),
-                        fontSize = 12.sp,
-                        color = Color.White
-                            //MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        text = note.content,
-                        maxLines = 4,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        overflow = TextOverflow.Ellipsis
-                    )
+            val texts = note.content.filterIsInstance<ContentItem.Text>()
+            texts.joinToString("\n") { it.content }
+                .let {
+                    if (it.isNotBlank()) {
+                        noteViewByImage(note= note, modifier = Modifier.padding(top = 16.dp))
+                        Column(modifier.padding(bottom = 16.dp, start = 24.dp, end = 24.dp)) {
+                            Spacer(Modifier.height(16.dp))
+                            Text(
+                                text = it,
+                                maxLines = 4,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    } else {
+                        noteViewByImage(note=note, modifier = Modifier.padding(top = 56.dp))
+                    }
                 }
-            }
+        }
+
+}
+
+
+@Composable
+private fun noteViewByImage(
+    modifier: Modifier= Modifier,
+    note: Note,
+) {
+    val imageInstance = note.content.filterIsInstance<ContentItem.Image>()
+    Box(modifier = Modifier.fillMaxWidth())
+    {
+        imageInstance.getOrNull(0)?.let {
+            AsyncImage(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.onSurface
+                            )
+                        )
+                    )
+                ,
+                model = it.url,
+                contentDescription = "First image of note",
+                contentScale = ContentScale.FillWidth
+            )
+        }
+        Column(
+            modifier = Modifier.padding(horizontal = 24.dp)
+        ) {
+            Spacer(modifier = modifier)
+            Text(
+                text = note.title,
+                fontSize = 14.sp,
+                maxLines = 1,
+                color = if (imageInstance.size < 1) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    Color.White
+                }
+            )
+            Text(
+                text = DateFormatter.formatDateTimeToString(note.updatedAt),
+                fontSize = 12.sp,
+                color =if (imageInstance.isNotEmpty()) {
+                    Color.White
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                }
+            )
+        }
     }
+
 }
 
 @Composable
