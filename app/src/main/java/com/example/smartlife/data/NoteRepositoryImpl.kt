@@ -19,28 +19,32 @@ class NoteRepositoryImpl @Inject constructor(
         isPinned: Boolean,
         updatedAt: Long
     ) {
-        notesDao.addNote(
-            Note(
-                id = 0,
-                title = title,
-                content = content.processForStorage(),
-                isPinned = isPinned,
-                updatedAt = updatedAt
-            ).toDBModel()
+        val processedContent = content.processForStorage()
+        val noteDBModel = NoteDBModel(
+            id = 0,
+            title = title,
+            updatedAt = updatedAt,
+            isPinned = isPinned
+        )
+        notesDao.addNoteWithContent(
+            noteDBModel,
+            processedContent
         )
     }
-    private suspend fun List<ContentItem>.processForStorage(): List<ContentItem>{
-        return map{ contentItem->
-            when(contentItem){
-                is ContentItem.Image ->{
-                    if (imageManager.isInternal(contentItem.url)){
+
+    private suspend fun List<ContentItem>.processForStorage(): List<ContentItem> {
+        return map { contentItem ->
+            when (contentItem) {
+                is ContentItem.Image -> {
+                    if (imageManager.isInternal(contentItem.url)) {
                         contentItem
-                    }else{
+                    } else {
                         val newPath = imageManager.saveToInternalStorage(contentItem.url)
                         contentItem.copy(url = newPath)
                     }
                 }
-                is ContentItem.Text ->{
+
+                is ContentItem.Text -> {
                     contentItem
                 }
             }
@@ -56,19 +60,23 @@ class NoteRepositoryImpl @Inject constructor(
         val newURls = newContentItems.content.filterIsInstance<ContentItem.Image>().map { it.url }
 
 
-        val diff = oldURls-newURls
+        val diff = oldURls - newURls
         diff.forEach {
             imageManager.deleteFromInternalStorage(it)
         }
-        val addUrls = newContentItems.content.processForStorage()
-        val contentItems = note.copy(content = addUrls)
+        val processedContent = newContentItems.content.processForStorage()
+        val contentItems = note.copy(content = processedContent )
 
-        return notesDao.addNote(contentItems.toDBModel())
+       notesDao.updateNoteWithContent(
+           contentItems.toDBModel(),
+           processedContent.toContentItemDBModels(note.id)
+       )
+
     }
 
     override suspend fun deleteNote(noteId: Int) {
         val noteToDelete = notesDao.getNote(noteId).toEntity()
-        return notesDao.deleteNote(noteId)
+        notesDao.deleteNote(noteId)
         noteToDelete.content.filterIsInstance<ContentItem.Image>().forEach {
             imageManager.deleteFromInternalStorage(it.url)
         }

@@ -9,7 +9,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-@Database(entities = [NoteDBModel::class], version = 2, exportSchema = false)
+@Database(entities = [NoteDBModel::class, ContentItemDBModel::class], version = 3, exportSchema = false)
 abstract class NotesDataBase: RoomDatabase() {
 
     abstract fun NotesDao(): NotesDao

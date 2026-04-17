@@ -2,47 +2,61 @@ package com.example.smartlife.data
 
 import com.example.smartlife.domain.ContentItem
 import com.example.smartlife.domain.Note
-import kotlinx.serialization.json.Json
 
-fun Note.toDBModel(): NoteDBModel{
-    val contentDBModel = Json.encodeToString(content.toContentItemDBModels())
-    return NoteDBModel(id,title,contentDBModel,updatedAt,isPinned)
+fun Note.toDBModel(): NoteDBModel {
+    return NoteDBModel(id, title, updatedAt, isPinned)
 }
 
-fun List<ContentItem>.toContentItemDBModels(): List<ContentItemDBModel>{
-    return map{ contentItem->
-        when(contentItem){
+fun List<ContentItem>.toContentItemDBModels(noteId: Int): List<ContentItemDBModel> {
+    return mapIndexed { index, contentItem ->
+        when (contentItem) {
             is ContentItem.Image -> {
-                ContentItemDBModel.Image(url = contentItem.url)
+                ContentItemDBModel(
+                    noteId = noteId,
+                    contentType = ContentType.IMAGE,
+                    content = contentItem.url,
+                    order = index
+                )
             }
+
             is ContentItem.Text -> {
-                ContentItemDBModel.Text(content = contentItem.content)
+                ContentItemDBModel(
+                    noteId = noteId,
+                    contentType = ContentType.TEXT,
+                    content = contentItem.content,
+                    order = index
+                )
             }
         }
     }
 }
 
 
-fun NoteDBModel.toEntity(): Note{
-    val contentNote = Json.decodeFromString<List<ContentItemDBModel>>(content).toContentItems()
-    return Note(id,title,contentNote,updatedAt,isPinned)
+fun NoteWithContentItem.toEntity(): Note {
+    return Note(
+        note.id,
+        note.title,
+        content.toContentItems(),
+        note.updatedAt,
+        note.isPinned
+    )
 }
 
-fun List<ContentItemDBModel>.toContentItems(): List<ContentItem>{
-    return map {
-        contentItemDBModel->
-        when(contentItemDBModel){
-            is ContentItemDBModel.Image ->{
-                ContentItem.Image(url = contentItemDBModel.url)
+fun List<ContentItemDBModel>.toContentItems(): List<ContentItem> {
+    return map { contentItemDBModel ->
+        when (contentItemDBModel.contentType) {
+            ContentType.TEXT -> {
+                ContentItem.Text(content = contentItemDBModel.content)
             }
-            is ContentItemDBModel.Text -> {
-            ContentItem.Text(content = contentItemDBModel.content)
+
+            ContentType.IMAGE -> {
+                ContentItem.Image(url = contentItemDBModel.content)
             }
         }
     }
 }
 
 
-fun List<NoteDBModel>.toEntities(): List<Note>{
+fun List<NoteWithContentItem>.toEntities(): List<Note> {
     return this.map { it.toEntity() }
 }
