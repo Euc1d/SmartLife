@@ -64,7 +64,7 @@ class NoteRepositoryImpl @Inject constructor(
         diff.forEach {
             imageManager.deleteFromInternalStorage(it)
         }
-        val processedContent = newContentItems.content.processForStorage()
+        val processedContent = note.content.processForStorage()
         val contentItems = note.copy(content = processedContent )
 
        notesDao.updateNoteWithContent(

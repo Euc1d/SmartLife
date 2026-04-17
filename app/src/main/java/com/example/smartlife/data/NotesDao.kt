@@ -56,8 +56,8 @@ interface NotesDao {
         noteDBModel: NoteDBModel,
         contentItemDbModels: List<ContentItemDBModel>
     ){
-        addNote(noteDBModel)
         deleteNote(noteDBModel.id)
+        addNote(noteDBModel)
         addNoteContent(contentItemDbModels)
     }
 }
